@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ACADEMIA SGI - Plataforma Integral de Gestión, Riesgos y Cumplimiento</title>
+    
+    <!-- PWA meta tags for iPhone / iPad / Android -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Academia SGI">
+    <meta name="theme-color" content="#0f172a">
+    
+    <!-- External Libraries: FontAwesome, Tailwind CSS, ExcelJS, jsPDF -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: { 800: '#1e3a8a', 900: '#0f172a', 950: '#090d16' },
+                        corporate: { blue: '#2563eb', dark: '#1e293b' },
+                        iso37001: '#3b82f6', 
+                        iso9001: '#10b981',   
+                        iso31000: '#8b5cf6',  
+                        coso: '#f97316',      
+                        iso19011: '#475569',  
+                        integrated: '#d97706' 
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .norm-badge-iso37001 { background-color: #3b82f6; color: white; }
+        .norm-badge-iso9001 { background-color: #10b981; color: white; }
+        .norm-badge-iso31000 { background-color: #8b5cf6; color: white; }
+        .norm-badge-coso { background-color: #f97316; color: white; }
+        .norm-badge-iso19011 { background-color: #475569; color: white; }
+        .norm-badge-integrated { background-color: #d97706; color: white; }
+        
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-navy-900 text-white sticky top-0 z-50 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-blue-600 p-2 rounded-lg text-white font-bold text-xl shadow">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg tracking-wide">ACADEMIA SGI</h1>
+                    <p class="text-xs text-slate-400">Gestión de Riesgos, Calidad, Antisoborno y Cumplimiento</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-3">
+                <div id="sync-status" class="hidden sm:flex items-center text-xs bg-emerald-900/60 text-emerald-300 px-2.5 py-1 rounded-full border border-emerald-700">
+                    <span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse mr-1.5"></span> Sincronizado
+                </div>
+                <div class="relative">
+                    <select id="active-user-select" onchange="switchUser(this.value)" class="bg-slate-800 text-xs text-white border border-slate-700 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-blue-500">
+                        <option value="admin">Adm: Administrador Principal</option>
+                        <option value="part1" selected>Part: Participante 1</option>
+                        <option value="part2">Part: Participante 2</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main App Container -->
+    <div class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 grid grid-cols-1 md:grid-cols-4 gap-6">
+        
+        <!-- Sidebar Navigation -->
+        <nav class="md:col-span-1 bg-white rounded-2xl shadow-sm border border-slate-200 p-4 h-fit space-y-1">
+            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider px-3 mb-2">Menú Principal</div>
+            <button onclick="navigateTo('dashboard')" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-slate-600 hover:bg-slate-50 active-nav" data-target="dashboard">
+                <i class="fas fa-chart-pie w-5 text-blue-600"></i><span>Dashboard</span>
+            </button>
+            <button onclick="navigateTo('academia')" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-slate-600 hover:bg-slate-50" data-target="academia">
+                <i class="fas fa-graduation-cap w-5 text-emerald-600"></i><span>Academia (21 Módulos)</span>
+            </button>
+            <button onclick="navigateTo('coso')" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-slate-600 hover:bg-slate-50" data-target="coso">
+                <i class="fas fa-cubes w-5 text-orange-600"></i><span>Módulo COSO ERM 2017</span>
+            </button>
+            <button onclick="navigateTo('matriz_riesgos')" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-slate-600 hover:bg-slate-50" data-target="matriz_riesgos">
+                <i class="fas fa-table-cells w-5 text-purple-600"></i><span>SGI Risk Tools (Matriz 5x5)</span>
+            </button>
+            <button onclick="navigateTo('contingencias')" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-slate-600 hover:bg-slate-50" data-target="contingencias">
+                <i class="fas fa-triangle-exclamation w-5 text-red-600"></i><span>Planes de Contingencia</span>
+            </button>
+            <button onclick="navigateTo('incidentes')" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-slate-600 hover:bg-slate-50" data-target="incidentes">
+                <i class="fas fa-clipboard-list w-5 text-amber-600"></i><span>Gestión de Incidentes</span>
+            </button>
+            <button onclick="navigateTo('certificados')" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-slate-600 hover:bg-slate-50" data-target="certificados">
+                <i class="fas fa-certificate w-5 text-yellow-600"></i><span>Certificados y Reportes</span>
+            </button>
+            
+            <div class="pt-4 mt-4 border-t border-slate-100">
+                <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider px-3 mb-2">Ayuda iPhone / PWA</div>
+                <button onclick="showPwaGuide()" class="w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition">
+                    <i class="fab fa-apple w-5 text-slate-800"></i><span>Cómo instalar en iPhone</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Dynamic Content Display Area -->
+        <main class="md:col-span-3 space-y-6">
+
+            <!-- VIEW: DASHBOARD -->
+            <section id="view-dashboard" class="space-y-6 view-section">
+                <div class="bg-gradient-to-r from-navy-900 to-blue-900 rounded-2xl text-white p-6 shadow-sm">
+                    <h2 class="text-2xl font-bold mb-2">Bienvenido a ACADEMIA SGI</h2>
+                    <p class="text-sm text-slate-300 max-w-2xl">Plataforma profesional unificada bajo normas ISO 37001:2025, ISO 9001:2015, ISO 31000:2018 y COSO ERM 2017. Todo listo para operar, evaluar riesgos y gestionar cumplimiento.</p>
+                </div>
+
+                <!-- KPI Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="text-slate-400 text-xs font-semibold uppercase">Módulos Completados</div>
+                        <div class="text-3xl font-extrabold text-navy-900 mt-2">4 <span class="text-sm font-normal text-slate-500">/ 21</span></div>
+                        <div class="w-full bg-slate-100 rounded-full h-2 mt-3">
+                            <div class="bg-blue-600 h-2 rounded-full" style="width: 19%"></div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="text-slate-400 text-xs font-semibold uppercase">Riesgos Identificados</div>
+                        <div class="text-3xl font-extrabold text-navy-900 mt-2" id="kpi-risk-count">8</div>
+                        <div class="text-xs text-emerald-600 mt-3 flex items-center"><i class="fas fa-arrow-up mr-1"></i> 2 mitigados este mes</div>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="text-slate-400 text-xs font-semibold uppercase">Promedio Evaluaciones</div>
+                        <div class="text-3xl font-extrabold text-navy-900 mt-2">92.5%</div>
+                        <div class="text-xs text-blue-600 mt-3">Nivel: Avanzado / Profesional</div>
+                    </div>
+                </div>
+
+                <!-- Quick Access / Traceability Tag Legend -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                    <h3 class="font-bold text-slate-800 text-lg">Sistema de Etiquetas Normativas y Trazabilidad</h3>
+                    <p class="text-xs text-slate-500">Cada contenido, matriz y evaluación en Academia SGI se encuentra clasificado bajo los siguientes estándares internacionales:</p>
+                    <div class="flex flex-wrap gap-2 pt-2">
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold norm-badge-iso37001">ISO 37001:2025 (Antisoborno)</span>
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold norm-badge-iso9001">ISO 9001:2015 (Calidad)</span>
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold norm-badge-iso31000">ISO 31000:2018 (Riesgos)</span>
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold norm-badge-coso">COSO ERM 2017 (Gobierno y Estrategia)</span>
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold norm-badge-iso19011">ISO 19011:2018 (Auditoría)</span>
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold norm-badge-integrated">INTEGRADO / SGI</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: ACADEMIA (21 MÓDULOS) -->
+            <section id="view-academia" class="space-y-6 view-section hidden">
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">Programa Académico (21 Módulos)</h2>
+                        <p class="text-xs text-slate-500">Formación rigurosa en sistemas integrados, antisoborno, calidad y riesgos.</p>
+                    </div>
+                    <button onclick="downloadModulePdf()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow transition flex items-center">
+                        <i class="fas fa-file-pdf mr-2"></i> Descargar Resumen en PDF
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="modules-container">
+                    <!-- Loaded dynamically via JS -->
+                </div>
+            </section>
+
+            <!-- VIEW: COSO ERM 2017 -->
+            <section id="view-coso" class="space-y-6 view-section hidden">
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="p-3 bg-orange-100 text-orange-600 rounded-xl"><i class="fas fa-cubes text-xl"></i></div>
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-800">Módulo Especial COSO ERM 2017</h2>
+                            <p class="text-xs text-slate-500">Enterprise Risk Management: Integrating with Strategy and Performance</p>
+                        </div>
+                    </div>
+                    <p class="text-sm text-slate-600">COSO ERM 2017 se estructura en 5 componentes clave y 20 principios orientados a conectar la gestión de riesgos directamente con la creación y preservación del valor corporativo.</p>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-5 gap-3 pt-2">
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
+                            <span class="text-xs font-bold text-orange-600 uppercase">Componente 1</span>
+                            <h4 class="font-bold text-slate-800 text-sm mt-1">Gobierno y Cultura</h4>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
+                            <span class="text-xs font-bold text-orange-600 uppercase">Componente 2</span>
+                            <h4 class="font-bold text-slate-800 text-sm mt-1">Estrategia y Objetivos</h4>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
+                            <span class="text-xs font-bold text-orange-600 uppercase">Componente 3</span>
+                            <h4 class="font-bold text-slate-800 text-sm mt-1">Desempeño</h4>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
+                            <span class="text-xs font-bold text-orange-600 uppercase">Componente 4</span>
+                            <h4 class="font-bold text-slate-800 text-sm mt-1">Revisión y Modificación</h4>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
+                            <span class="text-xs font-bold text-orange-600 uppercase">Componente 5</span>
+                            <h4 class="font-bold text-slate-800 text-sm mt-1">Información y Reporte</h4>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: SGI RISK TOOLS (MATRIZ 5X5) -->
+            <section id="view-matriz_riesgos" class="space-y-6 view-section hidden">
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">SGI Risk Tools - Matriz 5x5</h2>
+                        <p class="text-xs text-slate-500">Evaluación de riesgos inherentes y residuales bajo ISO 31000 y COSO ERM.</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="openAddRiskModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow transition">
+                            <i class="fas fa-plus mr-1"></i> Nuevo Riesgo
+                        </button>
+                        <button onclick="exportRisksExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow transition">
+                            <i class="fas fa-file-excel mr-1"></i> Exportar Excel
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500 uppercase border-b border-slate-200">
+                                    <th class="p-3 font-semibold">Código</th>
+                                    <th class="p-3 font-semibold">Proceso / Descripción</th>
+                                    <th class="p-3 font-semibold">Norma / Fuente</th>
+                                    <th class="p-3 font-semibold text-center">Inherente (PxI)</th>
+                                    <th class="p-3 font-semibold">Control Asociado</th>
+                                    <th class="p-3 font-semibold text-center">Residual</th>
+                                    <th class="p-3 font-semibold">Tratamiento</th>
+                                </tr>
+                            </thead>
+                            <tbody id="risk-table-body" class="divide-y divide-slate-100">
+                                <!-- Dynamically populated -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: PLANES DE CONTINGENCIA -->
+            <section id="view-contingencias" class="space-y-6 view-section hidden">
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-center">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">Planes de Contingencia y Respuesta a Crisis</h2>
+                        <p class="text-xs text-slate-500">Acciones antes, durante y después de la materialización de un riesgo.</p>
+                    </div>
+                    <button onclick="alert('Generador de Plan de Contingencia activo.')" class="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow transition">
+                        <i class="fas fa-plus mr-1"></i> Crear Escenario de Crisis
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                        <span class="px-2.5 py-1 bg-red-100 text-red-700 font-bold rounded-lg text-xs">ISO 37001</span>
+                        <h3 class="font-bold text-slate-800">Incidente de Soborno o Corrupción</h3>
+                        <p class="text-xs text-slate-600">Detección de ofrecimiento indebido o soborno en contrataciones públicas o privadas.</p>
+                        <div class="pt-2 border-t border-slate-100 flex justify-between text-xs text-slate-500">
+                            <span>Impacto: Crítico</span>
+                            <span class="text-emerald-600 font-semibold">Plan Activo</span>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                        <span class="px-2.5 py-1 bg-emerald-100 text-emerald-700 font-bold rounded-lg text-xs">ISO 9001</span>
+                        <h3 class="font-bold text-slate-800">Falla Mayor en Control de Calidad</h3>
+                        <p class="text-xs text-slate-600">No conformidad crítica en lote de entrega o servicio al cliente principal.</p>
+                        <div class="pt-2 border-t border-slate-100 flex justify-between text-xs text-slate-500">
+                            <span>Impacto: Moderado</span>
+                            <span class="text-emerald-600 font-semibold">Plan Activo</span>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                        <span class="px-2.5 py-1 bg-purple-100 text-purple-700 font-bold rounded-lg text-xs">ISO 31000</span>
+                        <h3 class="font-bold text-slate-800">Interrupción Operativa / Proveedor</h3>
+                        <p class="text-xs text-slate-600">Corte imprevisto de cadena de suministro o servicios críticos de infraestructura.</p>
+                        <div class="pt-2 border-t border-slate-100 flex justify-between text-xs text-slate-500">
+                            <span>Impacto: Alto</span>
+                            <span class="text-emerald-600 font-semibold">Plan Activo</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: GESTIÓN DE INCIDENTES -->
+            <section id="view-incidentes" class="space-y-6 view-section hidden">
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-center">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">Registro y Gestión de Incidentes</h2>
+                        <p class="text-xs text-slate-500">Seguimiento de no conformidades, hallazgos de auditoría e incidentes éticos.</p>
+                    </div>
+                    <button onclick="alert('Formulario de registro de incidente abierto.')" class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow transition">
+                        <i class="fas fa-plus mr-1"></i> Registrar Incidente
+                    </button>
+                </div>
+                
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 text-center text-slate-500 text-sm">
+                    No existen incidentes abiertos en este momento. Todos los reportes previos han sido cerrados con verificación de eficacia.
+                </div>
+            </section>
+
+            <!-- VIEW: CERTIFICADOS -->
+            <section id="view-certificados" class="space-y-6 view-section hidden">
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                    <h2 class="text-xl font-bold text-slate-800">Generador de Certificados Académicos SGI</h2>
+                    <p class="text-xs text-slate-500">Emisión automática de certificados de aprovechamiento tras completar exitosamente los módulos y evaluaciones.</p>
+                    <div class="p-6 bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl text-center space-y-3">
+                        <i class="fas fa-award text-4xl text-yellow-500"></i>
+                        <h3 class="font-bold text-slate-800 text-lg">Certificado en Sistemas Integrados y Gestión de Riesgos</h3>
+                        <p class="text-xs text-slate-600 max-w-md mx-auto">Acredita la aprobación del programa intensivo bajo normativas ISO 37001, ISO 9001, ISO 31000 y COSO ERM 2017.</p>
+                        <button onclick="generateCertificatePdf()" class="bg-navy-900 hover:bg-navy-800 text-white font-semibold text-xs px-6 py-3 rounded-xl shadow transition">
+                            <i class="fas fa-download mr-2"></i> Descargar Certificado Oficial en PDF
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- PWA Install Guide Modal -->
+    <div id="pwa-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-lg text-slate-800"><i class="fab fa-apple mr-2"></i> Instalar en iPhone / iPad</h3>
+                <button onclick="closePwaGuide()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-lg"></i></button>
+            </div>
+            <p class="text-xs text-slate-600">Para ejecutar ACADEMIA SGI como una app nativa en tu dispositivo iOS:</p>
+            <ol class="text-xs text-slate-700 space-y-2 list-decimal pl-4">
+                <li>Abre esta página web en el navegador <b>Safari</b> de tu iPhone o iPad.</li>
+                <li>Toca el botón <b>Compartir</b> <i class="fas fa-share-from-square text-blue-600"></i> en la barra inferior de Safari.</li>
+                <li>Desplázate por el menú y selecciona <b class="text-blue-600">"Agregar a la pantalla de inicio"</b>.</li>
+                <li>Confirma tocando en <b>Agregar</b>. ¡Listo! Tendrás el ícono directo en tu pantalla.</li>
+            </ol>
+            <button onclick="closePwaGuide()" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-3 rounded-xl shadow transition">
+                Entendido
+            </button>
+        </div>
+    </div>
+
+    <!-- Add Risk Modal -->
+    <div id="risk-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-lg text-slate-800"><i class="fas fa-table-cells mr-2"></i> Registrar Nuevo Riesgo SGI</h3>
+                <button onclick="closeAddRiskModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-lg"></i></button>
+            </div>
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Descripción del Riesgo / Proceso</label>
+                    <input type="text" id="new-risk-desc" class="w-full border border-slate-300 rounded-xl p-2.5 focus:outline-none focus:border-blue-500" placeholder="Ej. Soborno en licitaciones de compras">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Referencia Normativa</label>
+                        <select id="new-risk-norm" class="w-full border border-slate-300 rounded-xl p-2.5 focus:outline-none focus:border-blue-500">
+                            <option value="ISO 37001">ISO 37001 (Antisoborno)</option>
+                            <option value="ISO 9001">ISO 9001 (Calidad)</option>
+                            <option value="ISO 31000">ISO 31000 (Riesgo)</option>
+                            <option value="COSO ERM">COSO ERM 2017</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Tratamiento</label>
+                        <select id="new-risk-treat" class="w-full border border-slate-300 rounded-xl p-2.5 focus:outline-none focus:border-blue-500">
+                            <option value="Reducir / Mitigar">Reducir / Mitigar</option>
+                            <option value="Evitar">Evitar</option>
+                            <option value="Compartir / Transferir">Compartir / Transferir</option>
+                            <option value="Aceptar">Aceptar</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Probabilidad (1-5)</label>
+                        <input type="number" id="new-risk-prob" min="1" max="5" value="3" class="w-full border border-slate-300 rounded-xl p-2.5 focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Impacto (1-5)</label>
+                        <input type="number" id="new-risk-imp" min="1" max="5" value="4" class="w-full border border-slate-300 rounded-xl p-2.5 focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+            </div>
+            <div class="flex space-x-3 pt-2">
+                <button onclick="closeAddRiskModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 rounded-xl transition">Cancelar</button>
+                <button onclick="saveNewRisk()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl shadow transition">Guardar Riesgo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application JavaScript Engine -->
+    <script>
+        let appState = {
+            currentUser: 'part1',
+            risks: [
+                { id: 'RSG-01', desc: 'Riesgo de soborno en selección de proveedores críticos', norm: 'ISO 37001', prob: 4, imp: 5, control: 'Debida diligencia y doble firma', residual: 'Moderado (6)', treat: 'Reducir' },
+                { id: 'RSG-02', desc: 'Incumplimiento de especificaciones de calidad en entrega', norm: 'ISO 9001', prob: 3, imp: 4, control: 'Inspección técnica de recepción', residual: 'Bajo (4)', treat: 'Reducir' },
+                { id: 'RSG-03', desc: 'Falta de actualización en contexto de la organización', norm: 'ISO 31000', prob: 2, imp: 3, control: 'Revisión directiva anual', residual: 'Bajo (2)', treat: 'Aceptar' }
+            ]
+        };
+
+        function navigateTo(targetView) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`view-${targetView}`).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-50', 'text-blue-600');
+                if(btn.getAttribute('data-target') === targetView) {
+                    btn.classList.add('bg-blue-50', 'text-blue-600');
+                }
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function switchUser(userId) {
+            appState.currentUser = userId;
+            renderAll();
+        }
+
+        function renderAcademyModules() {
+            const container = document.getElementById('modules-container');
+            if(!container) return;
+            
+            const modulesList = [
+                { id: 1, title: "Fundamentos de los sistemas de gestión integrados", norm: "integrated", block: "Bloque I" },
+                { id: 2, title: "Principios y fundamentos de gestión de riesgos", norm: "iso31000", block: "Bloque I" },
+                { id: 3, title: "Contexto organizacional, partes interesadas y objetivos", norm: "iso9001", block: "Bloque I" },
+                { id: 4, title: "Identificación de riesgos corporativos", norm: "iso31000", block: "Bloque I" },
+                { id: 5, title: "Análisis y evaluación de riesgos", norm: "iso31000", block: "Bloque I" },
+                { id: 6, title: "Tratamiento de riesgos y evaluación de controles", norm: "integrated", block: "Bloque I" },
+                { id: 7, title: "Riesgos inherentes, residuales, apetito y tolerancia", norm: "coso", block: "Bloque I" },
+                { id: 8, title: "Fundamentos de ISO 37001:2025 (Antisoborno)", norm: "iso37001", block: "Bloque II" },
+                { id: 9, title: "Contexto, liderazgo y gobierno del sistema antisoborno", norm: "iso37001", block: "Bloque II" },
+                { id: 10, title: "Evaluación de riesgos de soborno", norm: "iso37001", block: "Bloque II" },
+                { id: 11, title: "Debida diligencia y controles asociados", norm: "iso37001", block: "Bloque II" },
+                { id: 12, title: "Controles financieros y no financieros", norm: "iso37001", block: "Bloque II" },
+                { id: 13, title: "Regalos, hospitalidad, donaciones y conflictos de intereses", norm: "iso37001", block: "Bloque II" },
+                { id: 14, title: "Denuncias, investigaciones e incidentes de soborno", norm: "iso37001", block: "Bloque II" },
+                { id: 15, title: "Seguimiento, medición, auditoría y mejora (ISO 37001 / 19011)", norm: "iso19011", block: "Bloque II" },
+                { id: 16, title: "Fundamentos de ISO 9001:2015 (Calidad)", norm: "iso9001", block: "Bloque III" },
+                { id: 17, title: "Gestión por procesos, liderazgo y planificación", norm: "iso9001", block: "Bloque III" },
+                { id: 18, title: "Control operacional, evaluación del desempeño y satisfacción", norm: "iso9001", block: "Bloque III" },
+                { id: 19, title: "Planes de contingencia y respuesta ante riesgos materializados", norm: "integrated", block: "Bloque IV" },
+                { id: 20, title: "Continuidad operativa, recuperación y gestión de crisis", norm: "integrated", block: "Bloque IV" },
+                { id: 21, title: "Acciones correctivas, oportunidades de mejora e integración", norm: "integrated", block: "Bloque IV" }
+            ];
+
+            container.innerHTML = modulesList.map(m => `
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-3">
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs font-bold text-slate-400">${m.block} • Módulo ${m.id}</span>
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold norm-badge-${m.norm}">${m.norm.toUpperCase()}</span>
+                        </div>
+                        <h3 class="font-bold text-slate-800 text-sm">${m.title}</h3>
+                    </div>
+                    <div class="pt-3 border-t border-slate-100 flex justify-between items-center text-xs">
+                        <span class="text-slate-500"><i class="fas fa-book-open mr-1 text-blue-600"></i> Lección completa</span>
+                        <button onclick="alert('Iniciando Módulo ${m.id}: ${m.title}')" class="text-blue-600 font-semibold hover:underline">Estudiar <i class="fas fa-arrow-right ml-1"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderRiskTable() {
+            const tbody = document.getElementById('risk-table-body');
+            if(!tbody) return;
+            
+            tbody.innerHTML = appState.risks.map(r => {
+                const inherValue = r.prob * r.imp;
+                let badgeColor = 'bg-emerald-100 text-emerald-800';
+                if(inherValue >= 15) badgeColor = 'bg-red-100 text-red-800';
+                else if(inherValue >= 8) badgeColor = 'bg-amber-100 text-amber-800';
+
+                return `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-3 font-bold text-slate-700">${r.id}</td>
+                        <td class="p-3 text-slate-800 font-medium">${r.desc}</td>
+                        <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700">${r.norm}</span></td>
+                        <td class="p-3 text-center"><span class="px-2.5 py-1 rounded-full text-xs font-bold ${badgeColor}">${inherValue} (${r.prob}x${r.imp})</span></td>
+                        <td class="p-3 text-slate-600">${r.control}</td>
+                        <td class="p-3 text-center"><span class="px-2 py-0.5 rounded text-xs font-semibold bg-blue-50 text-blue-700">${r.residual}</span></td>
+                        <td class="p-3 text-slate-600 font-medium">${r.treat}</td>
+                    </tr>
+                `;
+            }).join('');
+            
+            document.getElementById('kpi-risk-count').innerText = appState.risks.length;
+        }
+
+        function showPwaGuide() { document.getElementById('pwa-modal').classList.remove('hidden'); }
+        function closePwaGuide() { document.getElementById('pwa-modal').classList.add('hidden'); }
+        function openAddRiskModal() { document.getElementById('risk-modal').classList.remove('hidden'); }
+        function closeAddRiskModal() { document.getElementById('risk-modal').classList.add('hidden'); }
+
+        function saveNewRisk() {
+            const desc = document.getElementById('new-risk-desc').value;
+            const norm = document.getElementById('new-risk-norm').value;
+            const treat = document.getElementById('new-risk-treat').value;
+            const prob = parseInt(document.getElementById('new-risk-prob').value);
+            const imp = parseInt(document.getElementById('new-risk-imp').value);
+
+            if(!desc) { alert('Por favor ingrese la descripción del riesgo.'); return; }
+
+            appState.risks.push({
+                id: `RSG-0${appState.risks.length + 1}`,
+                desc, norm, prob, imp,
+                control: 'Control pendiente de diseño',
+                residual: 'Moderado',
+                treat
+            });
+
+            closeAddRiskModal();
+            renderRiskTable();
+        }
+
+        async function exportRisksExcel() {
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('Matriz de Riesgos SGI');
+            
+            worksheet.columns = [
+                { header: 'Código', key: 'id', width: 10 },
+                { header: 'Descripción del Riesgo', key: 'desc', width: 40 },
+                { header: 'Norma / Fuente', key: 'norm', width: 15 },
+                { header: 'Probabilidad', key: 'prob', width: 15 },
+                { header: 'Impacto', key: 'imp', width: 10 },
+                { header: 'Control Asociado', key: 'control', width: 30 },
+                { header: 'Tratamiento', key: 'treat', width: 20 }
+            ];
+
+            appState.risks.forEach(r => worksheet.addRow(r));
+
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Matriz_Riesgos_SGI.xlsx';
+            a.click();
+        }
+
+        function generateCertificatePdf() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('landscape');
+
+            doc.setFillColor(15, 23, 42); 
+            doc.rect(10, 10, 277, 190, 'F');
+
+            doc.setTextColor(255, 255, 255);
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(28);
+            doc.text("ACADEMIA SGI", 148, 40, { align: "center" });
+
+            doc.setFontSize(14);
+            doc.setTextColor(203, 213, 225);
+            doc.text("CERTIFICADO DE APROVECHAMIENTO PROFESIONAL", 148, 52, { align: "center" });
+
+            doc.setFontSize(12);
+            doc.text("Se otorga el presente reconocimiento a:", 148, 80, { align: "center" });
+
+            doc.setFontSize(22);
+            doc.setTextColor(255, 255, 255);
+            doc.text("PARTICIPANTE AUTORIZADO SGI", 148, 95, { align: "center" });
+
+            doc.setFontSize(11);
+            doc.setTextColor(203, 213, 225);
+            doc.text("Por haber completado satisfactoriamente el programa de formación integral en:", 148, 115, { align: "center" });
+            
+            doc.setFontSize(13);
+            doc.setTextColor(59, 130, 246);
+            doc.text("ISO 37001 • ISO 9001 • ISO 31000 • COSO ERM 2017", 148, 127, { align: "center" });
+
+            doc.setFontSize(10);
+            doc.setTextColor(148, 163, 184);
+            doc.text("Fecha de emisión: 2026 | Código Único de Verificación: SGI-CERT-2026-001", 148, 165, { align: "center" });
+
+            doc.save("Certificado_Academia_SGI.pdf");
+        }
+
+        function renderAll() {
+            renderAcademyModules();
+            renderRiskTable();
+        }
+
+        window.onload = function() {
+            renderAll();
+        };
+    </script>
+</body>
+</html>
+```e-o-f
+
+He generado el archivo `index.html` en el editor de documentos. 
+
+### ¿Cómo descargarlo en tu computadora?
+1. Haz clic en el botón de **descargar** o **guardar** dentro del panel del editor (a la derecha) para bajar directamente el archivo `index.html`.
+2. Una vez descargado, solo debes subir ese archivo `index.html` a tu repositorio de GitHub para publicarlo.
